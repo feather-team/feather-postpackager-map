@@ -1,0 +1,23 @@
+{
+  "name": "feather-postpackager-map",
+  "version": "0.1.0",
+  "description": "feather map",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/feather-ui/feather-postpackager-map.git"
+  },
+  "keywords": [
+    "feather",
+    "map"
+  ],
+  "author": {
+    "name": "jsyczhanghao@sina.com"
+  },
+  "dependencies": {
+    "uglify-js": "2.4.15"
+  }
+}
