@@ -1,7 +1,7 @@
 //inline 模式的map策略
 //autocombine以及静态资源内联
 
-function autoCombine(ret, file, rs){
+function autoCombine(ret, file, rs, opt){
     var urlMap = ret.feather.urlMap;
 
     ['headJs', 'bottomJs', 'css'].forEach(function(type){
@@ -30,7 +30,7 @@ function autoCombine(ret, file, rs){
             pkgFile.setContent(content);
 
             ret.pkg[path] = pkgFile;
-            resources.push(path);
+            resources.push(pkgFile.getUrl(opt.md5, opt.domain));
         }else{
             resources.push.apply(resources, noPkgs);
         }
@@ -121,7 +121,7 @@ module.exports = function(ret, conf, setting, opt){
             var resource = featherMap.resource[subpath], content = file.getContent();
 
             if(opt.pack && feather.config.get('autoCombine')){
-                resource = autoCombine(ret, file, resource);
+                resource = autoCombine(ret, file, resource, opt);
             }
 
             var head = '', bottom = '', css = resource.css || [], headJs = resource.headJs || [], bottomJs = resource.bottomJs || [];
