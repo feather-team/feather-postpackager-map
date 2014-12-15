@@ -4,8 +4,8 @@ module.exports = function(ret, conf, setting, opt){
     //process start
     var process = [];
 
-    if(feather.config.get('inlineMode')){
-        process.push('inline-map');
+    if(feather.config.get('staticMode')){
+        process.push('static-map');
     }else{
         process.push('map');
     }
