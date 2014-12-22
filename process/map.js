@@ -47,7 +47,6 @@ module.exports = function(ret, conf, setting, opt){
 
     if(!modulename || modulename == 'common'){
         var config = feather.config.get('require.config') || {};
-        config.domain = '{$root}';
         hash.requireConfig = require('uglify-js').minify('_=' + feather.util.json(config), {fromString: true}).code.substring(2);
         hash.commonMap = featherMap.commonResource;
     }
