@@ -110,11 +110,6 @@ function getAllResource(resources, urls, deps){
 module.exports = function(ret, conf, setting, opt){
 	var featherMap = ret.feather;
     var resources = featherMap.resource, deps = featherMap.deps, urls = featherMap.urlMap, commonMap = featherMap.commonResource;
-    
-    var config = feather.config.get('require.config');
-    config.domain = feather.config.get('roadmap.domain');
-
-    var requireConfig = require('uglify-js').minify('_=' + feather.util.json(config), {fromString: true}).code.substring(2);
 
     feather.util.map(ret.src, function(subpath, file){
         if(file.isHtmlLike){
@@ -141,9 +136,13 @@ module.exports = function(ret, conf, setting, opt){
             });
 
             var md = getStaticRequireMapAndDeps(ret, deps[subpath], urls);
-
+            
             if(!file.isPageletLike){
-                head += '<script>require.config=' + requireConfig + '</script>';
+                var domain = feather.config.get('require.config.domain', feather.config.get('roadmap.domain'));
+
+                if(domain){
+                    md.domain = domain;
+                }
             }
             	
             head += '<script>require.mergeConfig(' + feather.util.json(md) + ')</script>';

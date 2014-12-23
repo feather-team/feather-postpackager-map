@@ -1,6 +1,6 @@
 {
   "name": "feather-postpackager-map",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "feather map",
   "main": "index.js",
   "scripts": {
@@ -16,8 +16,5 @@
   ],
   "author": {
     "name": "jsyczhanghao@sina.com"
-  },
-  "dependencies": {
-    "uglify-js": "2.4.15"
   }
 }
