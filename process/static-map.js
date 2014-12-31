@@ -1,8 +1,8 @@
-//inline 模式的map策略
+//staticMode 模式的map策略
 //autocombine以及静态资源内联
 
-function autoCombine(ret, file, rs, opt){
-    var urlMap = ret.feather.urlMap;
+function pack(ret, file, rs, opt){
+    var urlMap = ret.feather.urlMap, autoCombine = feather.config.get('autoCombine');
 
     ['headJs', 'bottomJs', 'css'].forEach(function(type){
         var resources = rs[type], noPkgs = [];
@@ -12,9 +12,16 @@ function autoCombine(ret, file, rs, opt){
         for(var i = 0; i < resources.length; i++){
             var resource = resources[i], info = urlMap[resource];
 
-            if(info && !info.pkg){
-                noPkgs.push(resource);
-                resources.splice(i--, 1);
+            if(info){
+                if(info.pkg){
+                    resources[i] = urlMap[info.pkg].domainUrl;
+                }else{
+                    if(autoCombine){
+                        noPkgs.push(resource);
+                    }else{
+                        resources[i] = info.domainUrl;
+                    }
+                }
             }
         }
 
@@ -26,13 +33,17 @@ function autoCombine(ret, file, rs, opt){
             });
 
             var path = '/static/combine/' + feather.util.md5(file.subpath, 10) + '.' + (type == 'css' ? 'css' : 'js');
-            var pkgFile= new feather.file(feather.project.getProjectPath() + path);
+            var pkgFile = new feather.file(feather.project.getProjectPath() + path);
             pkgFile.setContent(content);
 
             ret.pkg[path] = pkgFile;
-            resources.push(pkgFile.getUrl(opt.md5, opt.domain));
-        }else{
-            resources.push.apply(resources, noPkgs);
+            resources[resources.indexOf(noPkgs[0])] = pkgFile.getUrl(opt.md5, opt.domain)
+
+            for(var i = 1; i < noPkgs.length; i++){
+                resources.splice(resources.indexOf(noPkgs[i]), 1);
+            }
+        }else if(noPkgs.length == 1){
+            resources[resources[noPkgs[0]]] = urlMap[noPkgs[0]].domainUrl;
         }
     });
 
@@ -95,9 +106,9 @@ function getAllResource(resources, urls, deps){
 
         if(_){
             tmp.push(_.domainUrl);
-
+            
             if(deps[resource]){
-                tmp.push.apply(tmp, getAllResource(deps[resource], urls, deps));
+                tmp = getAllResource(deps[resource], urls, deps).concat(tmp);
             }
         }else{
             tmp.push(resource);
@@ -115,8 +126,8 @@ module.exports = function(ret, conf, setting, opt){
         if(file.isHtmlLike){
             var resource = featherMap.resource[subpath], content = file.getContent();
 
-            if(opt.pack && feather.config.get('autoCombine')){
-                resource = autoCombine(ret, file, resource, opt);
+            if(opt.pack){
+                resource = pack(ret, file, resource, opt);
             }
 
             var head = '', bottom = '', css = resource.css || [], headJs = resource.headJs || [], bottomJs = resource.bottomJs || [];
@@ -152,13 +163,21 @@ module.exports = function(ret, conf, setting, opt){
             });
 
             if(!file.isPageletLike){
-                content = content.replace(/<\/head>/, function(){
-                    return head + '</head>';
-                });
-
-                content = content.replace(/<\/body>/, function(){
-                    return bottom + '</body>';
-                });
+                if(/<\/head>/.test(content)){
+                    content = content.replace(/<\/head>/, function(){
+                        return head + '</head>';
+                    });
+                }else{
+                    content = head + content;
+                }
+                
+                if(/<\/body>/.test(content)){
+                    content = content.replace(/<\/body>/, function(){
+                        return bottom + '</body>';
+                    });
+                }else{
+                    content += bottom;
+                }
             }else{
                 content = head + content + bottom;
             }
