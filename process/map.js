@@ -4,7 +4,7 @@ module.exports = function(ret, conf, setting, opt){
     var hash = {map: {}}, modulename = feather.config.get('project.modulename');
 
     feather.util.map(urls, function(subpath, item){
-        if(modulename && item.moduleName != modulename || item.isPkg) return;
+        if(modulename && item.moduleName != modulename) return;
 
         var _ = {};
 
@@ -24,7 +24,9 @@ module.exports = function(ret, conf, setting, opt){
             }
         }else{
             if(item.pkg){
-                _.url = urls[item.pkg].md5Url;
+                //_.url = urls[item.pkg].md5Url;
+                _.url = item.md5Url;
+                _.pkg = item.pkg;
             }else{
                 _.url = item.md5Url;
             }
