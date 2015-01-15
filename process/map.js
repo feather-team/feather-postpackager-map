@@ -51,7 +51,7 @@ module.exports = function(ret, conf, setting, opt){
         hash.commonMap = featherMap.commonResource;
     }
 
-    var file = feather.file.wrap(feather.project.getProjectPath() + '/map/' + feather.config.get('project.ns') + '/' + (modulename || 'map') + '.php');
+    var file = feather.file.wrap(feather.project.getProjectPath() + '/map/' + feather.config.get('project.name') + '/' + (modulename || 'map') + '.php');
     file.setContent("<?php\r\nreturn " + feather.util.toPhpArray(hash) + ";");
     ret.pkg[file.subpath] = file;
 };
