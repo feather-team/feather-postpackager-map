@@ -47,7 +47,7 @@ function getStaticRequireMapAndDeps(resources, urls, deps){
         return {map: {}, deps: {}};
     }
 
-    var hash = getAllResource(resources, urls, deps, true);
+    var hash = getAllResource(resources, urls, deps, true, true);
     var mapResult = {}, depsResult = {};
 
     feather.util.map(hash, function(key, item){
@@ -73,7 +73,7 @@ function getStaticRequireMapAndDeps(resources, urls, deps){
     return {map: mapResult, deps: depsResult};
 }
 
-function getAllResource(resources, urls, deps, returnHash, hash, pkgHash){
+function getAllResource(resources, urls, deps, returnHash, noDomain, hash, pkgHash){
     var tmp = [];
 
     hash = hash || {};
@@ -90,21 +90,21 @@ function getAllResource(resources, urls, deps, returnHash, hash, pkgHash){
                     if(pkg = pkgHash[pkgName]){
                         url = hash[resource] = pkgHash[pkgName];
                     }else{
-                        url = hash[resource] = pkgHash[pkgName] = urls[_.pkg].domainUrl;
+                        url = hash[resource] = pkgHash[pkgName] = !noDomain ? urls[_.pkg].domainUrl : urls[_.pkg].md5Url;
 
                         if(deps[pkgName] && !_.isMod){
-                            tmp = tmp.concat(getAllResource(deps[pkgName], urls, deps, returnHash, hash, pkgHash));
+                            tmp = tmp.concat(getAllResource(deps[pkgName], urls, deps, returnHash, noDomain, hash, pkgHash));
                         }
                     }
 
                     if(_.isMod && deps[resource]){
-                        tmp = tmp.concat(getAllResource(deps[resource], urls, deps, returnHash, hash, pkgHash));
+                        tmp = tmp.concat(getAllResource(deps[resource], urls, deps, returnHash, noDomain, hash, pkgHash));
                     }
                 }else{
-                    url = hash[resource] = _.domainUrl;
+                    url = hash[resource] = !noDomain ? _.domainUrl : _.md5Url;
 
                     if(deps[resource]){
-                        tmp = tmp.concat(getAllResource(deps[resource], urls, deps, returnHash, hash, pkgHash));
+                        tmp = tmp.concat(getAllResource(deps[resource], urls, deps, returnHash, noDomain, hash, pkgHash));
                     }
                 }
             }else{
@@ -122,7 +122,7 @@ function getAllResource(resources, urls, deps, returnHash, hash, pkgHash){
 
 
 module.exports = function(ret, conf, setting, opt){
-	var featherMap = ret.feather;
+    var featherMap = ret.feather;
     var resources = featherMap.resource, deps = featherMap.deps, urls = featherMap.urlMap, commonMap = featherMap.commonResource;
 
     feather.util.map(ret.src, function(subpath, file){
@@ -160,13 +160,15 @@ module.exports = function(ret, conf, setting, opt){
             var md = getStaticRequireMapAndDeps(deps[subpath], urls, deps);
             
             if(!file.isPageletLike){
-                var domain = feather.config.get('require.config.domain', feather.config.get('roadmap.domain'));
+                if(opt.domain){
+                    var domain = feather.config.get('require.config.domain', feather.config.get('roadmap.domain'));
 
-                if(domain){
-                    md.domain = domain;
-                }
+                    if(domain){
+                        md.domain = domain;
+                    }
+                }   
             }
-            	
+                
             head += '<script>require.mergeConfig(' + feather.util.json(md) + ')</script>';
             
 
