@@ -14,7 +14,7 @@ module.exports = function(ret, conf, setting, opt){
         require('./process/' + process + '.js')(ret, conf, setting, opt); 
     });
 
-    var modulename = feather.config.get('project.modulename'), ns = feather.config.get('project.ns');
+    var modulename = feather.config.get('project.modulename'), ns = feather.config.get('project.name');
 
     if(modulename){
         //write release json
