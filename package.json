@@ -1,6 +1,6 @@
 {
   "name": "feather-postpackager-map",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "feather map",
   "main": "index.js",
   "scripts": {
