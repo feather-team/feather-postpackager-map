@@ -39,6 +39,10 @@ function pack(ret, file, rs, opt){
         }
     }
 
+    rs.forEach(function(subpath, key){
+        rs[key] = urlMap[subpath] ? urlMap[subpath].domainUrl : subpath;
+    });
+
     return rs;
 }
 
@@ -48,9 +52,14 @@ function getStaticRequireMapAndDeps(resources, urls, deps){
     }
 
     var hash = getAllResource(resources, urls, deps, true, true);
-    var mapResult = {}, depsResult = {};
+    var mapResult = {}, depsResult = {}, cssResult = [];
 
     feather.util.map(hash, function(key, item){
+        if(urls[key] && !urls[key].isMod && urls[key].isCssLike){
+            cssResult.push(item);
+            return;
+        }
+
         if(!mapResult[item]){
             mapResult[item] = [];
         }
@@ -70,7 +79,7 @@ function getStaticRequireMapAndDeps(resources, urls, deps){
         mapResult[key] = feather.util.unique(map);
     });
 
-    return {map: mapResult, deps: depsResult};
+    return {map: mapResult, deps: depsResult, css: cssResult};
 }
 
 function getAllResource(resources, urls, deps, returnHash, noDomain, hash, pkgHash){
@@ -137,6 +146,14 @@ module.exports = function(ret, conf, setting, opt){
             }  
 
             css = getAllResource(css, urls, deps);
+            headJs = getAllResource(headJs, urls, deps);
+            var md = getStaticRequireMapAndDeps(deps[subpath], urls, deps);
+
+            if(md.css.length){
+                css.push.apply(css, md.css);
+                delete md.css;
+                css = feather.util.unique(css);
+            }
 
             if(opt.pack){
                 css = pack(ret, file, css, opt);
@@ -146,9 +163,6 @@ module.exports = function(ret, conf, setting, opt){
                 head += '<link rel="stylesheet" href="' + v + '" type="text/css" />';
             });
 
-
-            headJs = getAllResource(headJs, urls, deps);
-
             if(opt.pack){
                 headJs = pack(ret, file, headJs, opt);
             }
@@ -157,8 +171,6 @@ module.exports = function(ret, conf, setting, opt){
                 head += '<script src="' + js + '"></script>';
             });
 
-            var md = getStaticRequireMapAndDeps(deps[subpath], urls, deps);
-            
             if(!file.isPageletLike){
                 if(opt.domain){
                     var domain = feather.config.get('require.config.domain', feather.config.get('roadmap.domain'));
@@ -170,7 +182,6 @@ module.exports = function(ret, conf, setting, opt){
             }
                 
             head += '<script>require.mergeConfig(' + feather.util.json(md) + ')</script>';
-            
 
             bottomJs = getAllResource(bottomJs, urls, deps);
 

@@ -1,10 +1,6 @@
 module.exports = function(ret, conf, setting, opt){
     var featherMap = ret.feather;
-    var resources = featherMap.resource, 
-        deps = featherMap.deps, 
-        requires = featherMap.requires;
-        urls = featherMap.urlMap, 
-        components = featherMap.components;
+    var resources = featherMap.resource, deps = featherMap.deps, urls = featherMap.urlMap, components = featherMap.components;
 
     var hash = {map: {}}, modulename = feather.config.get('project.modulename');
 
@@ -43,10 +39,6 @@ module.exports = function(ret, conf, setting, opt){
 
         if(deps[subpath] && deps[subpath].length){
             _.deps = deps[subpath];
-        }
-
-        if(requires[subpath] && requires[subpath].length){
-            _.requires = requires[subpath];
         }
 
         if(!feather.util.isEmptyObject(_)){
