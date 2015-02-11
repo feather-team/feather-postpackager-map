@@ -48,7 +48,7 @@ function pack(ret, file, rs, opt){
 
 function getStaticRequireMapAndDeps(resources, urls, deps){
     if(!resources || !resources.length){
-        return {map: {}, deps: {}};
+        return {map: {}, deps: {}, css: []};
     }
 
     var hash = getAllResource(resources, urls, deps, true, true);
@@ -151,9 +151,10 @@ module.exports = function(ret, conf, setting, opt){
 
             if(md.css.length){
                 css.push.apply(css, md.css);
-                delete md.css;
                 css = feather.util.unique(css);
             }
+
+            delete md.css;
 
             if(opt.pack){
                 css = pack(ret, file, css, opt);
