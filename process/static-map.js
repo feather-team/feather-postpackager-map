@@ -27,7 +27,7 @@ function pack(ret, file, rs, opt){
             content += ret.src[pkg].getContent() + '\r\n';
         });
 
-        var path = '/static/combine/' + feather.util.md5(file.subpath, 10) + '.' + (type == 'css' ? 'css' : 'js');
+        var path = '/static/combine/' + feather.util.md5(file.subpath, 7) + '.' + (type == 'css' ? 'css' : 'js');
         var pkgFile = new feather.file(feather.project.getProjectPath() + path);
         pkgFile.setContent(content);
 
@@ -167,10 +167,6 @@ module.exports = function(ret, conf, setting, opt){
             if(opt.pack){
                 headJs = pack(ret, file, headJs, opt);
             }
-            
-            headJs.forEach(function(js){
-                head += '<script src="' + js + '"></script>';
-            });
 
             if(!file.isPageletLike){
                 if(opt.domain){
@@ -180,9 +176,23 @@ module.exports = function(ret, conf, setting, opt){
                         md.domain = domain;
                     }
                 }   
+
+                var path = '/static/fcg/' + feather.util.md5(file.subpath, 7) + '.js';
+                var cgFile = new feather.file(feather.project.getProjectPath() + path);
+                cgFile.setContent('require.mergeConfig(' + feather.util.json(md) + ')');
+
+                ret.pkg[path] = cgFile;
+
+                headJs.splice(2, 0, cgFile.getUrl(opt.hash, opt.domain));
             }
-                
-            head += '<script>require.mergeConfig(' + feather.util.json(md) + ')</script>';
+
+            headJs.forEach(function(js){
+                head += '<script src="' + js + '"></script>';
+            });
+
+            if(file.isPageletLike){
+                head += '<script>require.mergeConfig(' + feather.util.json(md) + ')</script>';
+            }
 
             bottomJs = getAllResource(bottomJs, urls, deps);
 
