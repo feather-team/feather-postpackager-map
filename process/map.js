@@ -50,6 +50,7 @@ module.exports = function(ret, conf, setting, opt){
 
     if(!modulename || modulename == 'common'){
         hash.commonMap = featherMap.commonResource;
+        hash.useRequire = feather.config.get('moduleLoader');
     }
 
     var file = feather.file.wrap(feather.project.getProjectPath() + '/map/' + (modulename || 'map') + '.php');

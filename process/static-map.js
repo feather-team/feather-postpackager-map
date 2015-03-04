@@ -145,8 +145,26 @@ module.exports = function(ret, conf, setting, opt){
                 bottomJs.unshift.apply(bottomJs, commonMap.bottomJs);
             }  
 
-            css = getAllResource(css, urls, deps);
             headJs = getAllResource(headJs, urls, deps);
+
+            for(var i = 0, j = headJs.length; i < j; i++){
+                if(/\.css$/.test(headJs[i])){
+                    css.push(headJs[i]);
+                    headJs.splice(i--, 1);
+                    j--;
+                }
+            }
+
+            bottomJs = getAllResource(bottomJs, urls, deps);
+
+            for(var i = 0, j = bottomJs.length; i < j; i++){
+                if(/\.css$/.test(bottomJs[i])){
+                    css.push(bottomJs[i]);
+                    bottomJs.splice(i--, 1);
+                    j--;
+                }
+            }
+
             var md = getStaticRequireMapAndDeps(deps[subpath], urls, deps);
 
             if(md.css.length){
@@ -155,6 +173,8 @@ module.exports = function(ret, conf, setting, opt){
             }
 
             delete md.css;
+
+            css = getAllResource(css, urls, deps);
 
             if(opt.pack){
                 css = pack(ret, file, css, opt);
@@ -168,7 +188,7 @@ module.exports = function(ret, conf, setting, opt){
                 headJs = pack(ret, file, headJs, opt);
             }
 
-            if(!file.isPageletLike){
+            if(!file.isPageletLike && feather.config.get('moduleLoader')){
                 if(opt.domain){
                     var domain = feather.config.get('require.config.domain', feather.config.get('roadmap.domain'));
 
@@ -190,11 +210,9 @@ module.exports = function(ret, conf, setting, opt){
                 head += '<script src="' + js + '"></script>';
             });
 
-            if(file.isPageletLike){
+            if(file.isPageletLike && feather.config.get('moduleLoader')){
                 head += '<script>require.mergeConfig(' + feather.util.json(md) + ')</script>';
             }
-
-            bottomJs = getAllResource(bottomJs, urls, deps);
 
             if(opt.pack){
                 bottomJs = pack(ret, file, bottomJs, opt);
