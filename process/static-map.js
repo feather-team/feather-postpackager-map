@@ -46,12 +46,12 @@ function pack(ret, file, rs, opt){
     return rs;
 }
 
-function getStaticRequireMapAndDeps(resources, urls, deps){
+function getStaticRequireMapAndDeps(resources, urls, deps, async){
     if(!resources || !resources.length){
         return {map: {}, deps: {}, css: []};
     }
 
-    var hash = getAllResource(resources, urls, deps, true, true);
+    var hash = getAllResource(resources, urls, deps, async, true, true);
     var mapResult = {}, depsResult = {}, cssResult = [];
 
     feather.util.map(hash, function(key, item){
@@ -70,7 +70,21 @@ function getStaticRequireMapAndDeps(resources, urls, deps){
 
         if(info = urls[key]){
             if(deps[key] && info.isMod){
-                depsResult[key] = deps[key];
+                if(info.isComponentLike){
+                    var _deps = [];
+
+                    deps[key].forEach(function(dep){
+                        if(urls[dep] && urls[dep].isCssLike){
+                            _deps.push(dep);
+                        }
+                    });
+
+                    if(_deps.length){
+                        depsResult[key] = _deps;
+                    }
+                }else{
+                    depsResult[key] = deps[key];
+                }
             }
         }
     });
@@ -82,7 +96,7 @@ function getStaticRequireMapAndDeps(resources, urls, deps){
     return {map: mapResult, deps: depsResult, css: cssResult};
 }
 
-function getAllResource(resources, urls, deps, returnHash, noDomain, hash, pkgHash){
+function getAllResource(resources, urls, deps, async, returnHash, noDomain, hash, pkgHash){
     var tmp = [];
 
     hash = hash || {};
@@ -101,19 +115,35 @@ function getAllResource(resources, urls, deps, returnHash, noDomain, hash, pkgHa
                     }else{
                         url = hash[resource] = pkgHash[pkgName] = !noDomain ? urls[_.pkg].domainUrl : urls[_.pkg].md5Url;
 
-                        if(deps[pkgName] && !_.isMod){
-                            tmp = tmp.concat(getAllResource(deps[pkgName], urls, deps, returnHash, noDomain, hash, pkgHash));
+                        if(!_.isMod){
+                            if(deps[pkgName]){
+                                tmp = tmp.concat(getAllResource(deps[pkgName], urls, deps, async, returnHash, noDomain, hash, pkgHash));
+                            }
+                           
+                            if(async[pkgName]){
+                                tmp = tmp.concat(getAllResource(async[pkgName], urls, deps, async, returnHash, noDomain, hash, pkgHash));
+                            }
                         }
                     }
 
-                    if(_.isMod && deps[resource]){
-                        tmp = tmp.concat(getAllResource(deps[resource], urls, deps, returnHash, noDomain, hash, pkgHash));
+                    if(_.isMod){
+                        if(deps[resource]){
+                            tmp = tmp.concat(getAllResource(deps[resource], urls, deps, async, returnHash, noDomain, hash, pkgHash));
+                        }
+
+                        if(async[resource]){
+                            tmp = tmp.concat(getAllResource(async[resource], urls, deps, async, returnHash, noDomain, hash, pkgHash));
+                        }
                     }
                 }else{
                     url = hash[resource] = !noDomain ? _.domainUrl : _.md5Url;
 
                     if(deps[resource]){
-                        tmp = tmp.concat(getAllResource(deps[resource], urls, deps, returnHash, noDomain, hash, pkgHash));
+                        tmp = tmp.concat(getAllResource(deps[resource], urls, deps, async, returnHash, noDomain, hash, pkgHash));
+                    }
+
+                    if(async[resource]){
+                        tmp = tmp.concat(getAllResource(async[resource], urls, deps, async, returnHash, noDomain, hash, pkgHash));
                     }
                 }
             }else{
@@ -132,7 +162,7 @@ function getAllResource(resources, urls, deps, returnHash, noDomain, hash, pkgHa
 
 module.exports = function(ret, conf, setting, opt){
     var featherMap = ret.feather;
-    var resources = featherMap.resource, deps = featherMap.deps, urls = featherMap.urlMap, commonMap = featherMap.commonResource;
+    var resources = featherMap.resource, deps = featherMap.deps, async = featherMap.async, urls = featherMap.urlMap, commonMap = featherMap.commonResource;
 
     feather.util.map(ret.src, function(subpath, file){
         if(file.isHtmlLike){
@@ -145,7 +175,7 @@ module.exports = function(ret, conf, setting, opt){
                 bottomJs.unshift.apply(bottomJs, commonMap.bottomJs);
             }  
 
-            headJs = getAllResource(headJs, urls, deps);
+            headJs = getAllResource(headJs, urls, deps, async);
 
             for(var i = 0, j = headJs.length; i < j; i++){
                 if(/\.css$/.test(headJs[i])){
@@ -155,7 +185,7 @@ module.exports = function(ret, conf, setting, opt){
                 }
             }
 
-            bottomJs = getAllResource(bottomJs, urls, deps);
+            bottomJs = getAllResource(bottomJs, urls, deps, async);
 
             for(var i = 0, j = bottomJs.length; i < j; i++){
                 if(/\.css$/.test(bottomJs[i])){
@@ -165,7 +195,7 @@ module.exports = function(ret, conf, setting, opt){
                 }
             }
 
-            var md = getStaticRequireMapAndDeps(deps[subpath], urls, deps);
+            var md = getStaticRequireMapAndDeps(async[subpath], urls, deps, async);
 
             if(md.css.length){
                 css.push.apply(css, md.css);
@@ -174,7 +204,7 @@ module.exports = function(ret, conf, setting, opt){
 
             delete md.css;
 
-            css = getAllResource(css, urls, deps);
+            css = getAllResource(css, urls, deps, async);
 
             if(opt.pack){
                 css = pack(ret, file, css, opt);
@@ -188,7 +218,7 @@ module.exports = function(ret, conf, setting, opt){
                 headJs = pack(ret, file, headJs, opt);
             }
 
-            if(!file.isPageletLike && feather.config.get('moduleLoader')){
+            if(!file.isPageletLike && feather.config.get('require.use')){
                 if(opt.domain){
                     var domain = feather.config.get('require.config.domain', feather.config.get('roadmap.domain'));
 
@@ -210,7 +240,7 @@ module.exports = function(ret, conf, setting, opt){
                 head += '<script src="' + js + '"></script>';
             });
 
-            if(file.isPageletLike && feather.config.get('moduleLoader')){
+            if(file.isPageletLike && feather.config.get('require.use')){
                 head += '<script>require.mergeConfig(' + feather.util.json(md) + ')</script>';
             }
 

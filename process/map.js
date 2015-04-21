@@ -1,6 +1,6 @@
 module.exports = function(ret, conf, setting, opt){
     var featherMap = ret.feather;
-    var resources = featherMap.resource, deps = featherMap.deps, urls = featherMap.urlMap, components = featherMap.components;
+    var resources = featherMap.resource, deps = featherMap.deps, async = featherMap.async, urls = featherMap.urlMap, components = featherMap.components;
 
     var hash = {map: {}}, modulename = feather.config.get('project.modulename');
 
@@ -34,11 +34,19 @@ module.exports = function(ret, conf, setting, opt){
 
             if(item.isMod){
                 _.isMod = 1;
+
+                if(item.isComponentLike){
+                    _.isComponent = 1;
+                }
             }
         }
 
         if(deps[subpath] && deps[subpath].length){
             _.deps = deps[subpath];
+        }
+
+        if(async[subpath] && async[subpath].length){
+            _.async = async[subpath];
         }
 
         if(!feather.util.isEmptyObject(_)){
@@ -50,7 +58,7 @@ module.exports = function(ret, conf, setting, opt){
 
     if(!modulename || modulename == 'common'){
         hash.commonMap = featherMap.commonResource;
-        hash.useRequire = feather.config.get('moduleLoader');
+        hash.useRequire = feather.config.get('require.use');
     }
 
     var file = feather.file.wrap(feather.project.getProjectPath() + '/map/' + (modulename || 'map') + '.php');
