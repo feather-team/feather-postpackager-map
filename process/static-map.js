@@ -55,7 +55,7 @@ function getStaticRequireMapAndDeps(resources, urls, deps, async){
     var mapResult = {}, depsResult = {}, cssResult = [];
 
     feather.util.map(hash, function(key, item){
-        if(urls[key] && !urls[key].isMod && urls[key].isCssLike){
+        if(urls[key] && (!urls[key].isMod || urls[key].isComponentLike) && urls[key].isCssLike){
             cssResult.push(item);
             return;
         }
